@@ -1,0 +1,10 @@
+TaskProva1:
+  message: "message_test"
+  position: 1
+  storage: 0
+
+TaskProva2:
+  message: "message_test_2"
+  position: 0
+  storage: 1
+  slot: 5

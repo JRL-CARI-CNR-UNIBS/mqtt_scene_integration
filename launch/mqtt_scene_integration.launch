@@ -1,0 +1,16 @@
+<launch>
+  <arg name="use_tls" default="false" />
+  <node name="mqtt_bridge" pkg="mqtt_bridge" type="mqtt_bridge_node.py" output="screen">
+    <rosparam command="load" file="$(find mqtt_scene_integration)/config/sharework_params.yaml" />
+    <rosparam if="$(arg use_tls)" command="load" ns="mqtt" file="$(find mqtt_scene_integration)/config/tls_params.yaml" />
+  </node>
+
+  <rosparam command="load" file="$(find mqtt_scene_integration)/config/operator_tasks.yaml" />
+
+  <node name="ros_jfmx_communication" pkg="mqtt_scene_integration" type="mqtt_scene_integration_node" output="screen">
+  </node>
+
+  <node name="object_scene" pkg="mqtt_scene_integration" type="object_scene.py" output="screen">
+  </node>
+
+</launch>

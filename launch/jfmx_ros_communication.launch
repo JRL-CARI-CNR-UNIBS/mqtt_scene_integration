@@ -1,0 +1,5 @@
+<launch>
+  <rosparam command="load" file="$(find sharework_mqtt_msgs)/config/operator_tasks.yaml" />
+  <node name="ros_jfmx_communication" pkg="sharework_mqtt_msgs" type="sharework_mqtt_msgs_node" output="screen">
+  </node>
+</launch>

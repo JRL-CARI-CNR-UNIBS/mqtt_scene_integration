@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 import rospy
-import sharework_mqtt_msgs.msg
+import mqtt_scene_integration.msg
 
 import object_loader_msgs.srv
 import object_loader_msgs.msg
@@ -44,6 +44,7 @@ def fixture_callback(data,position):
     global del_obj
     rospy.loginfo("position %f",position)
     print(data)
+
     if (data.state=="Empty"):
         obj_req=object_loader_msgs.srv.RemoveObjectsGroupRequest()
         obj_req.objects_group=fixture_slot[position]["name"]+"_"+fixture_slot[position]["content"]
@@ -69,7 +70,7 @@ def main():
         fixture_slot[p]={"content": "",
                          "name": "P"+str(p)}
         print(fixture_slot)
-        rospy.Subscriber("JFMX/L1/sharework/station/p"+str(p), sharework_mqtt_msgs.msg.Fixture, fixture_callback,p)
+        rospy.Subscriber("JFMX/L1/sharework/station/p"+str(p), mqtt_scene_integration.msg.Fixture, fixture_callback,p)
 
     rospy.spin()
 
