@@ -61,6 +61,8 @@ int main(int argc, char **argv)
   std::pair<int,std::string> robot_id_name;
   robot_id_name.first = std::numeric_limits<int>::quiet_NaN();;
   robot_id_name.second = "";
+  int number_of_slots=1;
+
 
   while (ros::ok())
   {
@@ -95,8 +97,8 @@ int main(int argc, char **argv)
         ROS_WARN("%s/storage not defined",task_name.c_str());
       }
 
-      int task_slot=-1;
-      if (!nh.getParam(task_name+"/slot",task_slot))
+      std::vector<int> task_slots{-1};
+      if (!nh.getParam(task_name+"/slot",task_slots))
       {
         ROS_WARN("%s/slot not defined",task_name.c_str());
       }
@@ -104,7 +106,7 @@ int main(int argc, char **argv)
       operator_state_msg.message = task_message;
       operator_state_msg.position = task_position;
       operator_state_msg.storage = task_storage;
-      operator_state_msg.slot.push_back( task_slot);
+      operator_state_msg.slot = task_slots;
 
       operator_state_pub.publish(operator_state_msg);
 
@@ -149,10 +151,18 @@ int main(int argc, char **argv)
         ROS_WARN("%s/storage not defined",robot_id_name.second.c_str());
       }
 
+      number_of_slots=1;
+      if (!nh.getParam(robot_id_name.second+"/number_of_slots",number_of_slots))
+      {
+        ROS_WARN("%s/number_of_slots not defined",robot_id_name.second.c_str());
+      }
+
+
+
       robot_state_msg.message = task_message;
       robot_state_msg.position = task_position;
       robot_state_msg.storage = task_storage;
-      robot_state_msg.slot.push_back( -1);
+      robot_state_msg.slot.push_back(-1);
 
       robot_state_pub.publish(robot_state_msg);
 
@@ -184,30 +194,45 @@ int main(int argc, char **argv)
         }
 
 
-        /* Look for slot chosen by the robot */
+        /* Look for slots chosen by the robot */
 
-        int task_slot = -1;
+        std::vector<int> task_slots;
         try
         {
-          std::string object_manipulated;
-          if (!nh.getParam("/inbound_pick_server/last_manipulated_object/name",object_manipulated))
+          std::vector<std::string> objects_manipulated;
+          std::string tmp;
+          if (!nh.getParam("/inbound_pick_server/manipulated_object_last/name",tmp))
           {
-            ROS_WARN("/inbound_pick_server/last_manipulated_object/name not defined");
+            ROS_WARN("/inbound_pick_server/manipulated_object_last/name not defined");
+          }
+          else
+            objects_manipulated.push_back(tmp);
+
+          if (!nh.getParam("/inbound_pick_server/manipulated_object_second_last/name",tmp))
+          {
+            ROS_WARN("/inbound_pick_server/manipulated_object_second_last/name not defined");
+          }
+          else
+            objects_manipulated.push_back(tmp);
+
+          for (unsigned int id_obj=0;id_obj<std::min(int (objects_manipulated.size()),number_of_slots);id_obj++)
+          {
+            int last_num;
+            for (int idx=objects_manipulated.at(id_obj).length()-1;idx>=0;idx--)
+            {
+              if (objects_manipulated.at(id_obj)[idx]<='9' && objects_manipulated.at(id_obj)[idx]>='0')
+                last_num = idx;
+              else
+                break;
+            }
+            task_slots.push_back(std::stoi(objects_manipulated.at(id_obj).substr(last_num,std::string::npos)));
           }
 
-          int last_num;
-          for (int idx=object_manipulated.length()-1;idx>=0;idx--)
-          {
-            if (object_manipulated[idx]<='9' && object_manipulated[idx]>='0')
-              last_num = idx;
-            else
-              break;
-          }
-          task_slot = std::stoi(object_manipulated.substr(last_num,std::string::npos));
         }
         catch (const std::exception &ex)
         {
           ROS_ERROR("unable to decode slot number.");
+          task_slots.push_back(-1);
         }
 
         if (task_message.compare("Loading")==0)
@@ -218,7 +243,7 @@ int main(int argc, char **argv)
         robot_state_msg.message = task_message;
         robot_state_msg.position = task_position;
         robot_state_msg.storage = task_storage;
-        robot_state_msg.slot.push_back(task_slot);
+        robot_state_msg.slot = task_slots;
 
         robot_state_pub.publish(robot_state_msg);
 
